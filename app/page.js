@@ -34,6 +34,9 @@ export default function MeterCard() {
   };
 
   useEffect(() => {
+
+    // Add codes to set values
+
     const interval = setInterval(() => {
       const newPerformance = Math.min(100, Math.random() * 100);
       const newAvailability = Math.min(100, Math.random() * 100);
@@ -50,7 +53,7 @@ export default function MeterCard() {
       <div className="flex flex-col justify-center items-center bg-meter-box-gradient shadow-lg rounded-lg px-6 pt-8 pb-8 w-full max-w-4xl">
         <h1 className="text-2xl font-bold text-[#33333333] mr-auto mb-4">OEE</h1>
 
-        {/* Metrics */}
+
         <div className="flex flex-wrap justify-around gap-6 mb-10">
           <div className="flex flex-col items-center">
             <span className="text-xl text-gray-400 font-bold mb-1"> Performance</span>
@@ -72,14 +75,14 @@ export default function MeterCard() {
           </div>
         </div>
 
-        {/* Centered Half-Circle Gauge */}
+
         <div className="relative flex items-center justify-center w-[400px] h-[200px]">
           <svg
             viewBox="0 0 100 50"
             className="w-full h-full"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Define Gradients */}
+            {/*  Gradients */}
             <defs>
               <linearGradient id="performanceGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 {/* <stop offset="0%" stopColor="#1995D2" /> */}
@@ -99,7 +102,7 @@ export default function MeterCard() {
             </defs>
 
 
-            {/* Background arcs */}
+            {/* Background */}
             <path
               d="M 34 50 A 15 15 0 0 1 66 50"
               fill="none"
@@ -133,7 +136,7 @@ export default function MeterCard() {
             />
 
 
-            {/* Performance Arc */}
+            {/* Performance  */}
             <path
               d="M 10 50 A 30 30 0 0 1 90 50"
               fill="none"
@@ -143,7 +146,7 @@ export default function MeterCard() {
               strokeDasharray={`${(performance * 126) / 100}, 126`}
             />
 
-            {/* Availability Arc */}
+            {/* Availability  */}
             <path
               d="M 16 50 A 29 29 0 0 1 84 50"
               fill="none"
@@ -153,7 +156,7 @@ export default function MeterCard() {
               strokeDasharray={`${(availability * 110) / 100}, 110`}
             />
 
-            {/* Quality Arc */}
+            {/* Quality  */}
             <path
               d="M 22 50 A 28 28 0 0 1 78 50"
               fill="none"
