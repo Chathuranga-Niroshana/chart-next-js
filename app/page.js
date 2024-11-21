@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Legend } from "chart.js";
 import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
@@ -11,9 +11,8 @@ ChartJS.register(
   {
     id: "centerText",
     beforeDraw: (chart) => {
-      const { ctx, width, height } = chart;
+      const { ctx, width } = chart;
       const centerX = width / 2;
-      const centerY = height / 2;
 
       const text = chart.config.options.plugins.centerText.text;
 
@@ -29,7 +28,6 @@ ChartJS.register(
         ctx.textBaseline = "middle";
         ctx.fillText(mainText, centerX, circleBottomY - 50);
 
-
         ctx.font = "16px Arial";
         ctx.fillStyle = "#FFFFFF";
         ctx.fillText(subText, centerX, circleBottomY - 20);
@@ -40,59 +38,31 @@ ChartJS.register(
 );
 
 export default function MeterCard() {
-  const [performance] = useState(61);
-  const [availability] = useState(52);
-  const [quality] = useState(45);
+  const [performance, setPerformance] = useState(51);
+  const [availability, setAvailability] = useState(52);
+  const [quality, setQuality] = useState(45);
+
+  const chartRef = useRef(null);
 
   const average = ((performance + availability + quality) / 3).toFixed(1);
 
-  const data = {
-    labels: ["Performance", "Availability", "Quality"],
+  const chartData = {
     datasets: [
       {
         data: [performance, 100 - performance],
-        backgroundColor: (ctx) => {
-          const chart = ctx.chart;
-          const { width, height } = chart;
-          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
-          gradient.addColorStop(0, "#1995D2");
-          gradient.addColorStop(0.3, "#049C64");
-          gradient.addColorStop(1, "#049C64");
-          return [gradient, "#33363F"];
-        },
+        backgroundColor: ["#1995D2", "#33363F"],
         borderWidth: 0,
         borderRadius: 20,
       },
       {
         data: [availability, 100 - availability],
-        backgroundColor: (ctx) => {
-          const chart = ctx.chart;
-          const { width, height } = chart;
-          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
-
-          gradient.addColorStop(0, "#4C78FF");
-          gradient.addColorStop(0.3, "#FF0004");
-          gradient.addColorStop(1, "#FF0004");
-          return [gradient, "#33363F"];
-        },
-
-
+        backgroundColor: ["#4C78FF", "#33363F"],
         borderWidth: 0,
         borderRadius: 20,
       },
       {
         data: [quality, 100 - quality],
-        backgroundColor: (ctx) => {
-          const chart = ctx.chart;
-          const { width, height } = chart;
-          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
-
-          gradient.addColorStop(0, "#FF0004");
-          gradient.addColorStop(0.5, "#FFBB38");
-          gradient.addColorStop(1, "#FFBB38");
-          return [gradient, "#33363F"];
-        },
-
+        backgroundColor: ["#FF0004", "#33363F"],
         borderWidth: 0,
         borderRadius: 20,
       },
@@ -106,8 +76,7 @@ export default function MeterCard() {
     ],
   };
 
-
-  const options = {
+  const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     rotation: -90,
@@ -129,6 +98,66 @@ export default function MeterCard() {
       mode: null,
     },
   };
+
+  // Smoothly update the dataset value
+  const smoothUpdate = (datasetIndex, newValue) => {
+    if (chartRef.current) {
+      const chart = chartRef.current;
+
+      let currentValue = chart.data.datasets[datasetIndex].data[0];
+
+      const step = (newValue - currentValue) / 30; // Increment/decrement in 30 steps
+      const animation = () => {
+        currentValue += step;
+
+        // Prevent overshooting the final value
+        if ((step > 0 && currentValue >= newValue) || (step < 0 && currentValue <= newValue)) {
+          currentValue = newValue; // Snap to the final value
+        }
+
+        chart.data.datasets[datasetIndex].data[0] = currentValue;
+        chart.data.datasets[datasetIndex].data[1] = 100 - currentValue;
+        chart.update("none"); // Avoid animations for immediate redraw
+
+        if (currentValue !== newValue) {
+          requestAnimationFrame(animation); // Recursively animate until the final value
+        }
+      };
+
+      animation();
+    }
+  };
+
+  // Handle data updates for performance, availability, and quality
+  const updateData = (newPerformance, newAvailability, newQuality) => {
+    if (newPerformance !== performance) {
+      smoothUpdate(0, newPerformance);
+      setPerformance(newPerformance);
+    }
+
+    if (newAvailability !== availability) {
+      smoothUpdate(1, newAvailability);
+      setAvailability(newAvailability);
+    }
+
+    if (newQuality !== quality) {
+      smoothUpdate(2, newQuality);
+      setQuality(newQuality);
+    }
+  };
+
+  // Simulate dynamic data changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newPerformance = Math.min(100, Math.random() * 100).toFixed(1);
+      const newAvailability = Math.min(100, Math.random() * 100).toFixed(1);
+      const newQuality = Math.min(100, Math.random() * 100).toFixed(1);
+
+      updateData(Number(newPerformance), Number(newAvailability), Number(newQuality));
+    }, 3000); // Change every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [performance, availability, quality]);
 
   return (
     <div className="flex flex-col items-center w-full px-4">
@@ -160,9 +189,15 @@ export default function MeterCard() {
           </div>
         </div>
 
-        <div className="w-full  h-[200px] mt-10 md:h-[200px] lg:h-[200px] relative overflow-hidden">
+        <div className="w-full h-[200px] mt-10 md:h-[200px] lg:h-[200px] relative overflow-hidden">
           <div className="bg-[#33363F] w-[400px] h-[200px] mb-10 rounded-t-full overflow-hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-black font-bold">
-            <Doughnut data={data} options={options} />
+            <Doughnut
+              data={chartData}
+              options={chartOptions}
+              ref={(chart) => {
+                chartRef.current = chart; // Store reference to chart instance
+              }}
+            />
           </div>
         </div>
       </div>
