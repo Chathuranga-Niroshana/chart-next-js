@@ -50,19 +50,46 @@ export default function MeterCard() {
     datasets: [
       {
         data: [performance, 100 - performance],
-        backgroundColor: ["#1995D2", "#33363F"],
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
+          gradient.addColorStop(0, "#1995D2");
+          gradient.addColorStop(0.3, "#049C64");
+          gradient.addColorStop(1, "#049C64");
+          return [gradient, "#33363F"];
+        },
         borderWidth: 0,
         borderRadius: 20,
       },
       {
         data: [availability, 100 - availability],
-        backgroundColor: ["#4C78FF", "#33363F"],
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
+
+          
+          gradient.addColorStop(0, "#4C78FF");
+          gradient.addColorStop(0.3, "#FF0004");
+          gradient.addColorStop(1, "#FF0004");
+          return [gradient, "#33363F"];
+        },
         borderWidth: 0,
         borderRadius: 20,
       },
       {
         data: [quality, 100 - quality],
-        backgroundColor: ["#FF0004", "#33363F"],
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
+
+          gradient.addColorStop(0, "#FF0004");
+          gradient.addColorStop(0.3, "#FFBB38");
+          gradient.addColorStop(1, "#FFBB38");
+          return [gradient, "#33363F"];
+        },
         borderWidth: 0,
         borderRadius: 20,
       },
@@ -99,28 +126,25 @@ export default function MeterCard() {
     },
   };
 
-  // Smoothly update the dataset value
   const smoothUpdate = (datasetIndex, newValue) => {
     if (chartRef.current) {
       const chart = chartRef.current;
 
       let currentValue = chart.data.datasets[datasetIndex].data[0];
 
-      const step = (newValue - currentValue) / 30; // Increment/decrement in 30 steps
+      const step = (newValue - currentValue) / 30;
       const animation = () => {
         currentValue += step;
 
-        // Prevent overshooting the final value
         if ((step > 0 && currentValue >= newValue) || (step < 0 && currentValue <= newValue)) {
-          currentValue = newValue; // Snap to the final value
+          currentValue = newValue;
         }
 
         chart.data.datasets[datasetIndex].data[0] = currentValue;
         chart.data.datasets[datasetIndex].data[1] = 100 - currentValue;
-        chart.update("none"); // Avoid animations for immediate redraw
-
+        chart.update("none");
         if (currentValue !== newValue) {
-          requestAnimationFrame(animation); // Recursively animate until the final value
+          requestAnimationFrame(animation);
         }
       };
 
@@ -128,7 +152,7 @@ export default function MeterCard() {
     }
   };
 
-  // Handle data updates for performance, availability, and quality
+
   const updateData = (newPerformance, newAvailability, newQuality) => {
     if (newPerformance !== performance) {
       smoothUpdate(0, newPerformance);
@@ -146,7 +170,7 @@ export default function MeterCard() {
     }
   };
 
-  // Simulate dynamic data changes
+
   useEffect(() => {
     const interval = setInterval(() => {
       const newPerformance = Math.min(100, Math.random() * 100).toFixed(1);
@@ -154,7 +178,7 @@ export default function MeterCard() {
       const newQuality = Math.min(100, Math.random() * 100).toFixed(1);
 
       updateData(Number(newPerformance), Number(newAvailability), Number(newQuality));
-    }, 3000); // Change every 3 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [performance, availability, quality]);
@@ -195,7 +219,7 @@ export default function MeterCard() {
               data={chartData}
               options={chartOptions}
               ref={(chart) => {
-                chartRef.current = chart; // Store reference to chart instance
+                chartRef.current = chart;
               }}
             />
           </div>
