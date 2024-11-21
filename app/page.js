@@ -2,59 +2,114 @@
 
 import { useState } from "react";
 import { Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
+import { Chart as ChartJS, ArcElement, Legend } from "chart.js";
+import ArrowDropUpIcon from "@mui/icons-material/ArrowDropUp";
+
+ChartJS.register(
   ArcElement,
-  Tooltip,
   Legend,
-} from "chart.js";
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+  {
+    id: "centerText",
+    beforeDraw: (chart) => {
+      const { ctx, width, height } = chart;
+      const centerX = width / 2;
+      const centerY = height / 2;
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+      const text = chart.config.options.plugins.centerText.text;
 
+      if (text) {
+        const [mainText, subText] = text.split(" \n ");
+        ctx.save();
+
+        const circleBottomY = chart.chartArea.bottom;
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 32px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(mainText, centerX, circleBottomY - 50);
+
+
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText(subText, centerX, circleBottomY - 20);
+        ctx.restore();
+      }
+    },
+  }
+);
 
 export default function MeterCard() {
-  const [performance, setPerformance] = useState(61);
-  const [availability, setAvailability] = useState(52);
-  const [quality, setQuality] = useState(34);
+  const [performance] = useState(61);
+  const [availability] = useState(52);
+  const [quality] = useState(45);
 
-  // Calculate the average
   const average = ((performance + availability + quality) / 3).toFixed(1);
 
   const data = {
-    labels: ["Performance", "Availability", "Quality", "a"],
+    labels: ["Performance", "Availability", "Quality"],
     datasets: [
       {
-        // Performance
         data: [performance, 100 - performance],
-        backgroundColor: ["#049C64", "#33363F"],
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
+          gradient.addColorStop(0, "#1995D2");
+          gradient.addColorStop(0.3, "#049C64");
+          gradient.addColorStop(1, "#049C64");
+          return [gradient, "#33363F"];
+        },
         borderWidth: 0,
+        borderRadius: 20,
       },
       {
-        // Availability
         data: [availability, 100 - availability],
-        backgroundColor: ["#FF0004", "#33363F"],
-        borderWidth: 0,
-      },
-      {
-        // Quality
-        data: [quality, 100 - quality],
-        backgroundColor: ["#FFBB38", "#33363F"],
-        borderWidth: 0,
-        borderRadius: 3,
-      },
-      {
-        // empty
-        data: [100],
-        backgroundColor: ["#33363F", "#33363F"],
-        borderWidth: 0,
-        cutout: "60%",
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
 
+          gradient.addColorStop(0, "#4C78FF");
+          gradient.addColorStop(0.3, "#FF0004");
+          gradient.addColorStop(1, "#FF0004");
+          return [gradient, "#33363F"];
+        },
+
+
+        borderWidth: 0,
+        borderRadius: 20,
+      },
+      {
+        data: [quality, 100 - quality],
+        backgroundColor: (ctx) => {
+          const chart = ctx.chart;
+          const { width, height } = chart;
+          const gradient = chart.ctx.createLinearGradient(0, 0, width, height);
+
+          gradient.addColorStop(0, "#FF0004");
+          gradient.addColorStop(0.5, "#FFBB38");
+          gradient.addColorStop(1, "#FFBB38");
+          return [gradient, "#33363F"];
+        },
+
+        borderWidth: 0,
+        borderRadius: 20,
+      },
+      {
+        data: [100],
+        backgroundColor: ["transparent"],
+        borderWidth: 150,
+        borderColor: "rgba(110, 112, 117, 0.4)",
+        cutout: "0%",
       },
     ],
   };
 
+
   const options = {
+    responsive: true,
+    maintainAspectRatio: false,
     rotation: -90,
     circumference: 180,
     cutout: "60%",
@@ -63,72 +118,36 @@ export default function MeterCard() {
         display: false,
       },
       tooltip: {
-        callbacks: {
-          label: (tooltipItem) => {
-            const { datasetIndex, dataIndex } = tooltipItem;
-            const labels = ["Performance", "Availability", "Quality"];
-            const values = [performance, availability, quality];
-            if (dataIndex === 0) {
-              return `${labels[datasetIndex]}: ${values[datasetIndex]}%`;
-            }
-            return null;
-          },
-        },
+        enabled: false,
       },
       centerText: {
         display: true,
-        text: `\n\n${average}%\n\nOEE`,
+        text: `${average}% \n OEE`,
       },
+    },
+    hover: {
+      mode: null,
     },
   };
 
-  //  plugin for center text 
-  ChartJS.register({
-    id: "centerText",
-    beforeDraw: (chart) => {
-      const { ctx, width, height } = chart;
-      const { text } = chart.config.options.plugins.centerText;
-
-      // Draw white circle in the center
-      ctx.save();
-      ctx.fillStyle = "transparent"; // White background for the center
-      ctx.beginPath();
-      ctx.arc(width / 2, height / 2, height / 4.5, 0, Math.PI * 2); // Adjust radius
-      ctx.fill();
-      ctx.restore();
-
-      // Draw center text
-      if (text) {
-        ctx.save();
-        ctx.font = "900 32px Arial";
-        ctx.fillStyle = "#ffffff";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        const lines = text.split("\n");
-        lines.forEach((line, index) => {
-          ctx.fillText(line, width / 2, height / 2 + index * 20);
-        });
-        ctx.restore();
-      }
-    },
-  });
-
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className=" flex flex-col justify-between bg-meter-box-gradient shadow-lg rounded-lg px-2 pt-2 w-1/2 ">
-        <h1 className="text-2xl mr-auto font-bold text-[#333333]">OEE</h1>
+    <div className="flex flex-col items-center w-full px-4">
+      <div className="flex flex-col justify-between bg-meter-box-gradient shadow-lg rounded-lg px-4 pt-4 w-full max-w-4xl">
+        <h1 className="text-2xl font-bold text-[#333333] mb-4">OEE</h1>
 
-        {/*  Boxes */}
-        <div className="flex justify-around w-full ">
+        <div className="flex flex-wrap justify-around gap-4">
           <div className="flex flex-col items-center">
-            <span className="text-xl text-[#6E7075] font-bold mb-1"> Performance</span>
-            <div className=" py-1 px-3 text-white font-bold bg-percentage-box-gradient rounded-full text-center">
+            <span className="text-xl text-[#6E7075] font-bold mb-1">
+              Performance
+            </span>
+            <div className="py-1 px-3 text-white font-bold bg-percentage-box-gradient rounded-full text-center">
               <ArrowDropUpIcon sx={{ fontSize: 40 }} /> {performance.toFixed(2)}%
             </div>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-xl text-[#6E7075] font-bold mb-1">Availability</span>
+            <span className="text-xl text-[#6E7075] font-bold mb-1">
+              Availability
+            </span>
             <div className="py-1 px-3 text-white font-bold bg-availability-box-gradient rounded-full text-center">
               <ArrowDropUpIcon sx={{ fontSize: 40 }} /> {availability.toFixed(2)}%
             </div>
@@ -141,9 +160,10 @@ export default function MeterCard() {
           </div>
         </div>
 
-        {/* Doughnut Chart */}
-        <div className="  w-[500px]  mx-auto h-[500px]">
-          <Doughnut data={data} options={options} />
+        <div className="w-full  h-[200px] mt-10 md:h-[200px] lg:h-[200px] relative overflow-hidden">
+          <div className="bg-[#33363F] w-[400px] h-[200px] mb-10 rounded-t-full overflow-hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-black font-bold">
+            <Doughnut data={data} options={options} />
+          </div>
         </div>
       </div>
     </div>
